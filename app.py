@@ -1,4 +1,18 @@
 import streamlit as st
+
+# ---- 簡易パスワード機能 ----
+PASSWORD = "music"  # 👈 あなたの好きなパスワードに変えてもOKです！
+
+st.sidebar.title("🔒 ログイン")
+auth_password = st.sidebar.text_input("パスワードを入力してください", type="password")
+
+if auth_password != PASSWORD:
+    st.info("左側のサイドバーからパスワードを入力してください。")
+    st.stop()  # 👈 パスワードが違う場合、ここでプログラムを強制ストップさせる
+# ----------------------------
+
+# ここから下に、昨日まで作った「st.title('📊 カテゴリ別・残高メーター付き家計簿')」などのコードが続くようにします
+
 import pandas as pd
 import datetime
 import os
