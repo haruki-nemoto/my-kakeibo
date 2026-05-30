@@ -1,7 +1,7 @@
 import streamlit as st
 
 # ---- 簡易パスワード機能 ----
-PASSWORD = "music"  # 👈 あなたの好きなパスワードに変えてもOKです！
+PASSWORD = "3373"  # 👈 あなたの好きなパスワードに変えてもOKです！
 
 st.sidebar.title("🔒 ログイン")
 auth_password = st.sidebar.text_input("パスワードを入力してください", type="password")
