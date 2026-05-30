@@ -12,6 +12,29 @@ if auth_password != PASSWORD:
 # ----------------------------
 
 # ここから下に、昨日まで作った「st.title('📊 カテゴリ別・残高メーター付き家計簿')」などのコードが続くようにします
+# ---- 合計残高の計算と表示 ----
+# ---- 期間の絞り込み（今月分） ----
+if not df.empty:
+    # 日付カラムを文字型から「日付データ」に変換します
+    df["日付"] = pd.to_datetime(df["日付"])
+    
+    # 今日の「年-月」を取得（例: 2026-05）
+    current_month = pd.Timestamp.now().strftime("%Y-%m")
+    
+    # データの中から、今月のデータだけを神がかり的に抽出！
+    df_current_month = df[df["日付"].dt.strftime("%Y-%m") == current_month]
+    
+    # 画面表示用に、日付の見た目を元の「2026-05-30」のような形式に戻しておきます
+    df["日付"] = df["日付"].dt.strftime("%Y-%m-%d")
+    df_current_month["日付"] = df_current_month["日付"].dt.strftime("%Y-%m-%d")
+else:
+    df_current_month = df
+
+# ---- 今月の合計収支の計算と表示 ----
+total_balance = df_current_month["金額"].sum() if not df_current_month.empty else 0
+st.metric(label="📊 今月の合計収支（残高）", value=f"{total_balance:,} 円")
+st.write("---")
+
 
 import pandas as pd
 import datetime
@@ -42,26 +65,29 @@ for cat in categories:
 total_budget = sum(budgets.values())
 
 # --- 3. メイン画面：支出の入力と保存（Step 2） ---
-st.header("💸 日々の支出を入力")
+st.header("💸 日々の収支を入力")
 
-# 入力フォームを横並びにする
-col1, col2, col3 = st.columns(3)
-with col1:
-    input_date = st.date_input("日付", datetime.date.today())
-with col2:
-    input_cat = st.selectbox("カテゴリ", categories)
-with col3:
-    input_price = st.number_input("金額（円）", min_value=0, value=0, step=100)
+# 👈 新しく「収支タイプ」を選ぶボタンを追加します
+type_options = ["支出", "収入"]
+action_type = st.radio("タイプを選択", type_options, horizontal=True)
 
-if st.button("➕ 支出を記録する", use_container_width=True):
-    if input_price > 0:
-        # 新しいデータを追加
-        new_data = pd.DataFrame([{"日付": str(input_date), "カテゴリ": input_cat, "金額": input_price}])
-        df = pd.concat([df, new_data], ignore_index=True)
-        # CSVファイルに保存
-        df.to_csv(DATA_FILE, index=False)
-        st.success(f"「{input_cat}: {input_price:,}円」を記録しました！")
-        st.rerun() # 画面を更新してグラフに反映
+# カテゴリの選択（支出のときだけ出す、などの工夫も後でできますが、いったん共通でOKです）
+category_options = ["食費", "交際費", "衣服・美容", "交通費", "サークル・音楽", "バイト収入", "その他"]
+category = st.selectbox("カテゴリ", category_options)
+
+amount = st.number_input("金額（円）", min_value=0, step=100)
+
+if st.button("➕ 記録する"):
+    # 👈 支出ならマイナス、収入ならプラスの数値に変換します
+    final_amount = -amount if action_type == "支出" else amount
+    
+    new_data = pd.DataFrame([[date, category, final_amount]], columns=["日付", "カテゴリ", "金額"])
+    df = pd.concat([df, new_data], ignore_index=True)
+    df.to_csv(DATA_FILE, index=False)
+    st.success(f"{action_type}を記録しました！")
+    st.rerun()
+
+
 
 # --- 4. 計算とビジュアル化（Step 1 & Step 3） ---
 st.markdown("---")
@@ -99,11 +125,11 @@ if not df.empty:
     st.header("📊 支出の割合（グラフ）")
     
     # Streamlit標準の棒グラフを表示
-    chart_data = df.groupby("カテゴリ")["金額"].sum()
+    chart_data = df_current_month.groupby("カテゴリ")["金額"].sum()
     st.bar_chart(chart_data)
     
     st.header("📋 これまでの履歴一覧")
-    st.dataframe(df.sort_values("日付", ascending=False), use_container_width=True)
+    st.dataframe(df_current_month.sort_values("日付", ascending=False), use_container_width=True)
     
     # データをリセットするボタン
     if st.sidebar.button("⚠️ データをすべて削除"):
