@@ -14,6 +14,24 @@ if auth_password != PASSWORD:
 # ここから下に、昨日まで作った「st.title('📊 カテゴリ別・残高メーター付き家計簿')」などのコードが続くようにします
 # ---- 合計残高の計算と表示 ----
 # ---- 期間の絞り込み（今月分） ----
+
+
+import pandas as pd
+import datetime
+import os
+
+# データの保存先ファイル（CSV形式）
+DATA_FILE = "kakeibo_data.csv"
+
+# アプリのタイトル
+st.title("📊 カテゴリ別・残高メーター付き家計簿")
+
+# --- 1. データの読み込み機能（Step 2） ---
+if os.path.exists(DATA_FILE):
+    df = pd.read_csv(DATA_FILE)
+else:
+    # ファイルがない場合は空のデータ枠（DataFrame）を作る
+    df = pd.DataFrame(columns=["日付", "カテゴリ", "金額"])
 if not df.empty:
     # 日付カラムを文字型から「日付データ」に変換します
     df["日付"] = pd.to_datetime(df["日付"])
@@ -34,24 +52,6 @@ else:
 total_balance = df_current_month["金額"].sum() if not df_current_month.empty else 0
 st.metric(label="📊 今月の合計収支（残高）", value=f"{total_balance:,} 円")
 st.write("---")
-
-
-import pandas as pd
-import datetime
-import os
-
-# データの保存先ファイル（CSV形式）
-DATA_FILE = "kakeibo_data.csv"
-
-# アプリのタイトル
-st.title("📊 カテゴリ別・残高メーター付き家計簿")
-
-# --- 1. データの読み込み機能（Step 2） ---
-if os.path.exists(DATA_FILE):
-    df = pd.read_csv(DATA_FILE)
-else:
-    # ファイルがない場合は空のデータ枠（DataFrame）を作る
-    df = pd.DataFrame(columns=["日付", "カテゴリ", "金額"])
 
 # --- 2. サイドバー設定：カテゴリ別の予算設定（Step 1） ---
 st.sidebar.header("⚙️ 今月の予算設定")
